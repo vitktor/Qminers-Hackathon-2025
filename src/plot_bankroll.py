@@ -1,6 +1,6 @@
 """Plot the bankroll of every variant through the evaluation loop on all training seasons.
 
-Writes docs/bankroll.png and docs/bankroll_dark.png (light and dark theme for the README).
+Writes docs/bankroll.png for the README.
 
 Usage: python src/plot_bankroll.py
 """
@@ -26,14 +26,9 @@ INIT_BANKROLL = 1000
 ORDER = [DEFAULT_VARIANT, "xgb_all", "logreg", "logreg_all"]
 assert set(ORDER) <= set(VARIANTS)
 
-THEMES = {
-    "light": {"surface": "#fcfcfb", "ink": "#0b0b0b", "ink2": "#52514e", "muted": "#898781",
-              "grid": "#e1e0d9", "axis": "#c3c2b7",
-              "series": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]},
-    "dark": {"surface": "#1a1a19", "ink": "#ffffff", "ink2": "#c3c2b7", "muted": "#898781",
-             "grid": "#2c2c2a", "axis": "#383835",
-             "series": ["#3987e5", "#d95926", "#199e70", "#c98500"]},
-}
+THEME = {"surface": "#fcfcfb", "ink": "#0b0b0b", "ink2": "#52514e", "muted": "#898781",
+         "grid": "#e1e0d9", "axis": "#c3c2b7",
+         "series": ["#2a78d6", "#eb6834", "#1baf7a", "#eda100"]}
 
 
 def bankroll_history(variant: str) -> pd.Series:
@@ -55,8 +50,8 @@ def spread_labels(values: list[float], min_gap: float) -> list[float]:
     return placed
 
 
-def plot(histories: dict[str, pd.Series], theme: str, path: Path) -> None:
-    t = THEMES[theme]
+def plot(histories: dict[str, pd.Series], path: Path) -> None:
+    t = THEME
     fig, ax = plt.subplots(figsize=(10, 5), dpi=160)
     fig.patch.set_facecolor(t["surface"])
     ax.set_facecolor(t["surface"])
@@ -103,8 +98,7 @@ def main() -> None:
     for variant in ORDER:
         histories[variant] = bankroll_history(variant)
         print(f"{variant}: final bankroll {histories[variant].iloc[-1]:.2f}")
-    plot(histories, "light", ROOT / "docs" / "bankroll.png")
-    plot(histories, "dark", ROOT / "docs" / "bankroll_dark.png")
+    plot(histories, ROOT / "docs" / "bankroll.png")
 
 
 if __name__ == "__main__":

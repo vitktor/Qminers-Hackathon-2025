@@ -67,10 +67,7 @@ Final bankroll starts from 1000 and comes from the full evaluation loop
 ([`src/evaluate.py`](src/evaluate.py)). The 2007–2011 column mimics the real submission
 setup: all earlier games are given as history and betting starts only in 2007.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/bankroll_dark.png">
-  <img alt="Bankroll of the four variants over all training seasons. xgb_market ends at 1161, logreg at 1071, xgb_all at 1018 after peaking near 1650, and logreg_all at 557." src="docs/bankroll.png">
-</picture>
+![Bankroll of the four variants over all training seasons. xgb_market ends at 1161, logreg at 1071, xgb_all at 1018 after peaking near 1650, and logreg_all at 557.](docs/bankroll.png)
 
 `xgb_all` peaks near 1650 and then gives most of it back. `xgb_market` grows more slowly but
 never falls far below the starting bankroll.
