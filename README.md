@@ -1,5 +1,10 @@
 # Ice Hockey Betting Model — Qminers Quant Hackathon 2025
 
+> **In short:** an ML betting agent for 20+ seasons of NHL games. Gradient boosting learns a
+> correction on top of the bookmaker's own probabilities and beats the market's log-loss in
+> season-by-season walk-forward validation. Over all training seasons it grows the bankroll by
+> 16 %, while the variants that ignore the market lose money or swing wildly.
+
 A betting agent for NHL-style ice hockey games, built for the
 [Qminers Quant Hackathon 2025](http://hyperion.felk.cvut.cz/). Each day the agent sees the
 day's results and the bookmaker's odds for upcoming games, estimates win probabilities and
@@ -13,7 +18,8 @@ wrong by more than its built-in margin (~17 % overround in this data).
 ## Approach
 
 The whole model lives in [`src/model.py`](src/model.py). It is a single module because the
-submission system only accepts one file. It has three stages:
+submission system only accepts one file. The maths behind each stage is written up in
+[`docs/model_math.pdf`](docs/model_math.pdf). It has three stages:
 
 **1. Online feature building (`FeatureBuilder`)**
 Games are processed strictly in date order. Before a game updates any team state, its
@@ -61,6 +67,20 @@ Final bankroll starts from 1000 and comes from the full evaluation loop
 ([`src/evaluate.py`](src/evaluate.py)). The 2007–2011 column mimics the real submission
 setup: all earlier games are given as history and betting starts only in 2007.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/bankroll_dark.png">
+  <img alt="Bankroll of the four variants over all training seasons. xgb_market ends at 1161, logreg at 1071, xgb_all at 1018 after peaking near 1650, and logreg_all at 557." src="docs/bankroll.png">
+</picture>
+
+`xgb_all` peaks near 1650 and then gives most of it back. `xgb_market` grows more slowly but
+never falls far below the starting bankroll.
+
+[`src/experiments.py`](src/experiments.py) holds the experiments behind the design choices:
+which seasons to train on, shrinking the model's log-odds toward the market's, checking
+whether the predicted edge matches the realised return, and testing whether each feature
+adds anything beyond the market price. Settings were chosen on the 2005–06 seasons only;
+the 2007–10 seasons were kept as a holdout and checked once at the end.
+
 **Takeaways**
 - Only the variants that start from the market's prediction beat it on log-loss at all,
   and the margin is small. The bookmaker is a very strong baseline.
@@ -70,6 +90,17 @@ setup: all earlier games are given as history and betting starts only in 2007.
   recent seasons, where it correctly bet very rarely. The ROI figures come from few bets
   and are not statistically significant. The honest conclusion is that the edge over this
   market is thin.
+- Beating the market on log-loss is necessary but not enough. `logreg_compact` (the market
+  plus the five features that helped most in the experiments) beats the market's log-loss on
+  later seasons too, yet bets more often and ends at 924 (895 from 2007).
+
+## What I'd do next
+
+- Size stakes by how uncertain the model is about its edge, not only by the edge itself.
+- Model draws explicitly instead of predicting P(home win | no draw) and treating draws as
+  losses.
+- Test on more seasons: with few bets per season, the ROI estimates are still too noisy to
+  separate a small real edge from luck.
 
 ## Running it
 
@@ -83,6 +114,8 @@ cd src
 python validate.py                              # walk-forward comparison of all variants
 python evaluate.py                              # default variant on all training seasons
 python evaluate.py xgb_all --from-season 2007   # a chosen variant on the last 4 seasons
+python experiments.py                           # design experiments (dev / holdout seasons)
+python plot_bankroll.py                         # regenerate the bankroll chart in docs/
 ```
 
 ## Repository structure
@@ -91,6 +124,9 @@ python evaluate.py xgb_all --from-season 2007   # a chosen variant on the last 4
 |---|---|---|
 | [`src/model.py`](src/model.py) | Features, probability models and staking | me |
 | [`src/validate.py`](src/validate.py) | Walk-forward validation against the market | me |
+| [`src/experiments.py`](src/experiments.py) | Experiments behind the design choices, with dev / holdout seasons | me |
+| [`src/plot_bankroll.py`](src/plot_bankroll.py) | Bankroll chart for the README | me |
+| [`docs/model_math.pdf`](docs/model_math.pdf) | Maths of the features, models and staking | me |
 | [`src/evaluate.py`](src/evaluate.py) | Runs a variant through the evaluation loop (extended with variant and season options) | organisers, extended by me |
 | [`src/environment.py`](src/environment.py) | Evaluation loop used by the submission system | organisers |
 | [`data/games.csv`](data/games.csv) | Training data: games from the 1989/90–2010/11 seasons | organisers |
